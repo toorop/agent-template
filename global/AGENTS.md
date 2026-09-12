@@ -34,8 +34,25 @@
 - Separate plainly what is a **fact**, what is an **hypothesis**, and what is a **recommendation**,
   and state the uncertainty. Report a blocker honestly rather than filling the gap with a
   plausible guess. **Never claim something works without having run it.**
-- Expect dictated messages: the maintainer may write with speech-to-text, so infer from context
-  rather than correcting the wording, and ask when a word looks like a transcription artefact.
+## Dictated messages
+
+<!-- ADJUST: drop this section if you type your messages. -->
+
+The maintainer writes with speech-to-text, so expect transcription errors — including in technical
+words, file names and options you are about to act on.
+
+- **Interpret charitably.** Read the intended meaning, not the literal words. Do not correct the
+  wording, and do not remark on the mistakes.
+- **A wrong word that is still a real word is the dangerous case.** Garbled text is visible and
+  costs nothing; a plausible substitution silently changes what you are about to do. Real examples
+  seen in practice: "cloud" for *Claude*, "glits" for *git*, "P." for *Pi*, "comité pouce" for
+  *commit and push*, "l'AMT" for *en l'état*.
+- **When in doubt, ask — never guess.** One clarifying question costs a sentence; a wrong
+  assumption costs a rewrite, or worse, a wrong action. Ask before acting, especially when the
+  ambiguity touches anything destructive, irreversible, or expensive to undo.
+- **Never silently reinterpret an instruction** because it looks odd. If an odd reading is
+  plausible but would change the outcome, say which reading you took — or ask first.
+- When two readings are possible and one is reversible, prefer it, and say so.
 
 ## Working rhythm
 

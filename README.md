@@ -82,6 +82,10 @@ Beyond the three choices above, the parts people most often change:
   should be creating them: an agent that cannot verify will guess.
 - **The attribution trailer.** The commit block shown is Claude Code specific. Delete it, or replace
   it with whatever your tool injects.
+- **Dictated messages.** The contract asks the agent to read dictated messages charitably and to ask
+  whenever a real word might be a mis-transcription. That section is worth keeping even if you type:
+  the ambiguity it describes is exactly where agents guess wrongly. Drop it if you have no use for
+  it.
 
 Everything is plain Markdown. Nothing here depends on a plugin, a daemon, a gateway or a vendor.
 
