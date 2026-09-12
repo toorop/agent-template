@@ -26,8 +26,9 @@
   output; what is unfinished, uncertain or known-broken; the proposed next step.
 - **Never commit, stage, or push** without an explicit request, and one authorization covers only
   the commits it names.
-- **Answer the maintainer in French.** Everything written into this repository — docs, comments,
-  commit messages, `STATE.md`, `TODO.md` — is in **English**.
+- **Answer the maintainer in the language set in the user-level file** (shipped default: French).
+  Everything written into this repository — docs, comments, commit messages, `STATE.md`, `TODO.md`
+  — is in **English** unless a repo-specific override above says otherwise.
 - `STATE.md` and `TODO.md` stay in sync with reality, `STATE.md` first section always
   `## Next action`, under ~150 lines.
 - Keep the diff small enough to revert on its own: no drive-by refactors, no formatting sweeps, no

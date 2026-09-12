@@ -1,13 +1,17 @@
 # Working agreement with the maintainer
 
 <!-- Universal rules: valid on every project, with every agent harness.
-     SINGLE SOURCE OF TRUTH. This file is copied to:
+     SINGLE SOURCE OF TRUTH. This file is installed to both tools by `install.sh --global`:
        ~/.claude/CLAUDE.md   (Claude Code, user-level memory)
        ~/.codex/AGENTS.md    (Codex, user-level instructions)
-     Edit it here, then re-copy. Never edit the installed copies by hand: they are overwritten.
-     Full per-language code style lives in `code-style.md`, next to this file. -->
+     Edit it here, then re-install. Never edit the installed copies by hand: they are overwritten.
+     Full per-language code style lives in `code-style.md`, next to this file.
+     Lines marked ADJUST are the author's choices, not universal truths: change them. -->
 
 ## Language
+
+<!-- ADJUST: this pair is one choice among many. Replace it with your own and keep the split
+     explicit — that is the only part that matters. -->
 
 - Always answer the maintainer **in French**.
 - Everything written into a repository — documentation, code comments, commit messages,
@@ -16,6 +20,9 @@
   stay as they are and are not translated, even when editing right next to them.
 
 ## Tone
+
+<!-- ADJUST: the length target below is a preference. The rule that pays off everywhere is
+     "answer first, no preamble, no restating the question". -->
 
 - Concise and direct. Lead with the answer or the result.
 - No preamble, no praise, no restating the request, no narrating your own process unless asked.
@@ -27,10 +34,13 @@
 - Separate plainly what is a **fact**, what is an **hypothesis**, and what is a **recommendation**,
   and state the uncertainty. Report a blocker honestly rather than filling the gap with a
   plausible guess. **Never claim something works without having run it.**
-- The maintainer dictates messages with speech-to-text: expect oddities, infer from context rather
-  than correcting the wording.
+- Expect dictated messages: the maintainer may write with speech-to-text, so infer from context
+  rather than correcting the wording, and ask when a word looks like a transcription artefact.
 
 ## Working rhythm
+
+<!-- ADJUST: deliberately strict. Many people prefer to let the agent run further before
+     stopping. Decide it explicitly instead of drifting into it. -->
 
 - **One step at a time. Never run from A to Z unattended.** A step is one coherent change that can
   be verified on its own.
@@ -46,6 +56,9 @@
 
 ## Git
 
+<!-- ADJUST: the attribution block below is Claude Code specific. Delete it if your tool injects
+     nothing, or replace it with the block yours injects. -->
+
 - **Never run `git commit` (nor `git add` in view of a commit, nor `git push`) without an explicit
   request.** Not after tests pass, not when the work is obviously finished, not after an approved
   plan, not because the previous step was validated.
@@ -56,16 +69,16 @@
   files touched. Never stage anything "just in case".
 - Never rewrite published history (no force-push, no rebasing pushed commits) without asking.
 - **Commit message**: first line in English, in the repo's style — bracketed prefix, lowercase,
-  short imperative (`[client] fix remove on advanced search`, `[build] drop gulp`). Body in French
-  when an explanation helps.
-- You may ignore this. If the tool injects its own attribution block, reproduce it **integrally**
-  and as the last lines, contiguous, with no blank line between them:
+  short imperative (`[client] fix remove on advanced search`, `[build] drop gulp`). Body in the
+  maintainer's language when an explanation helps.
+- If the tool injects its own attribution block, reproduce it **integrally** and as the last lines,
+  contiguous, with no blank line between them — for example:
 
       Co-Authored-By: Claude <noreply@anthropic.com>
       Claude-Session: https://claude.ai/code/session_XXXXXXXX
 
   When amending a commit, check with `git log -1 --format=%B` that no blank line crept in between
-  the two trailers.
+  the trailers.
 
 ## Repository state files
 

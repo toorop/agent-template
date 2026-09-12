@@ -6,21 +6,30 @@ or of machine.
 Two layers: one **universal contract** installed once per machine, and one thin **project file**
 copied into each repository. No duplication, one source to edit.
 
-## The problem it solves
+## Before you use it
 
-Coding agents accumulate rules: how to talk to you, when to commit, how to structure code, how to
-hand off a session. Those rules usually live in one tool's private memory. So they do not travel:
-open a second agent, or the same agent on another machine, and every rule is gone. Worse, the
-project's own hand-off document ends up pointing at a plan file that lives outside the repository.
+The rules shipped here are one person's habits, not a standard. Three of them are choices you
+should make deliberately rather than inherit:
 
-This template keeps the rules in Markdown, in files the tools already read, split by scope.
+1. **The language pair.** The contract says: answer the maintainer in **French**, write everything
+   inside the repository in **English**. That is one arbitrary pair. If your agent speaks a
+   different language to you, change it — but keep the split explicit, because "write docs in the
+   language you chat in" is how a repository ends up half-translated.
+2. **The working rhythm.** One step at a time: implement, verify, stop, report, wait for a go-ahead.
+   Never run A to Z unattended. That is stricter than most people start with. Loosening it is a
+   decision worth making on purpose.
+3. **The git policy.** Never commit, stage or push without an explicit request, and one
+   authorization covers only the commits it names. Enforced with the agent, it is the single rule
+   that most reliably prevents surprise history.
+
+The files mark these places with an `ADJUST` comment. Everything else is deliberately uncontroversial.
 
 ## Layout
 
     agent-template/
-    ├── install-global.sh          installs the machine-level files (dry run by default)
+    ├── install.sh                 installs either layer, dry run by default
     ├── global/
-    │   ├── AGENTS.md              THE contract — one source, copied to both tools
+    │   ├── AGENTS.md              THE contract — one source, installed to both tools
     │   └── code-style.md          per-language style rules, referenced by AGENTS.md
     └── project/                   copied into each new repository
         ├── AGENTS.md              project facts + non-negotiables
@@ -28,59 +37,62 @@ This template keeps the rules in Markdown, in files the tools already read, spli
         ├── STATE.md               hand-off template, `## Next action` first
         └── TODO.md                checkable plan template
 
-## Per machine (once)
+The two layers are independent: you can use the project files without ever installing the global
+contract, or install the contract and keep your own project files.
 
-    ./install-global.sh            # dry run: shows destinations and current state
-    ./install-global.sh --yes      # writes them
+## Global layer (once per machine)
 
-`global/AGENTS.md` is copied to **both** destinations, because both tools read the same contract:
+    ./install.sh                   # dry run, global layer
+    ./install.sh --global --yes    # install it
+
+The same contract is written to **both** destinations, because both tools read the same thing:
 
     ~/.claude/CLAUDE.md            Claude Code, user-level memory
     ~/.codex/AGENTS.md             Codex, user-level instructions
 
-and `global/code-style.md` to `~/.claude/code-style.md`.
+plus `global/code-style.md` to `~/.claude/code-style.md`. Re-run the script after every edit to
+`global/`. Never edit the installed copies by hand: they are overwritten, and the drift is silent.
 
-Re-run the script after every edit to `global/`. Never edit the installed copies by hand: they are
-overwritten, and the drift would be silent.
+## Project layer (once per repository)
 
-## Per repository
+    ./install.sh --project ~/dev/my-project          # dry run
+    ./install.sh --project ~/dev/my-project --yes    # copy the templates in
 
-    cp project/AGENTS.md project/CLAUDE.md project/STATE.md project/TODO.md .
-    $EDITOR AGENTS.md              # fill in PROJECT FACTS
+Existing files are **never overwritten** unless you pass `--force`, so this is safe to re-run on a
+repository that already has an `AGENTS.md`. When a file is skipped, the script says so and shows you
+the `diff` command rather than guessing.
 
-`project/CLAUDE.md` must contain `@AGENTS.md` and nothing else — some tools treat a leading `@` as
-an import and any extra line risks breaking it. If your tool wants a different filename, that file
-gets the same one-line content.
+Then fill in `PROJECT FACTS` in the repository's `AGENTS.md`. `project/CLAUDE.md` must contain
+`@AGENTS.md` and nothing else — some tools treat a leading `@` as an import and any extra line
+risks breaking it.
+
+Both layers at once:
+
+    ./install.sh --all ~/dev/my-project --yes
 
 ## Make it yours
 
-The rules shipped here are one person's habits, kept concrete on purpose so they are easy to edit.
-The parts most people will want to change:
+Beyond the three choices above, the parts people most often change:
 
-- **Language.** The contract says: answer the maintainer in French, write everything in the
-  repository in English. Pick your own pair, and keep the split explicit — that is the whole point.
-- **Working rhythm.** One step at a time, stop and report, wait for go-ahead, never run A to Z
-  unattended. A stricter default than most people start with; loosen it deliberately if you want,
-  but decide it rather than drifting.
-- **Git.** Never commit, stage, or push without an explicit request, and one authorization covers
-  only the commits it names. The attribution-trailer block is tool-specific: delete it if your tool
-  does not inject one.
-- **Code style.** The rules here cover Vue, CSS, JavaScript and Python in detail, and defer to the
-  ecosystem standard for the rest.
+- **Code style.** Vue, CSS, JavaScript and Python have detailed rules; the rest defers to the
+  ecosystem standard (`gofmt`, `rustfmt`, `clang-format`, the repo's own formatter). A formatter
+  configured in a repository always wins — the file says so explicitly, so an agent does not flip
+  between the two.
 - **Verification commands.** Per project, in `PROJECT FACTS`. If a project has none, the first step
   should be creating them: an agent that cannot verify will guess.
+- **The attribution trailer.** The commit block shown is Claude Code specific. Delete it, or replace
+  it with whatever your tool injects.
 
-Everything is plain Markdown. Nothing here depends on a plugin, a daemon, a gateway or a specific
-vendor.
+Everything is plain Markdown. Nothing here depends on a plugin, a daemon, a gateway or a vendor.
 
 ## Updating
 
 1. Edit in `global/` or `project/`.
-2. Re-run `./install-global.sh --yes` on each machine so the installed copies match.
+2. Re-run `./install.sh --global --yes` on each machine so the installed copies match.
 3. Commit and push.
 
-Note that repositories already set up keep their own copy of the project file: they are copies, not
-links, so later improvements have to be copied across deliberately.
+Repositories already set up keep their own copy of the project file: they are copies, not links, so
+later improvements have to be copied across deliberately.
 
 ## Why two layers
 
