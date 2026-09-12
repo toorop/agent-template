@@ -22,7 +22,9 @@ project, read `README.md` instead and use `install.sh`.
 - The universal rules in `global/AGENTS.md` and the short form in `project/AGENTS.md` overlap on
   purpose: the project file must stay usable on a machine where the global file is not installed.
   When one changes, check the other.
-- `install.sh` must never overwrite a project file without `--force`, and must require `--yes` to
-  write anything at all. Verifying that behaviour is part of any change to it.
+- `install.sh` must never overwrite a project file without `--force`, must require `--yes` to write
+  anything at all, and must back up every file it replaces as `<file>.bak-YYYYmmdd-HHMMSS` while
+  printing the `cp` command that undoes it. Backups must never be deleted unless the user passes
+  `--keep N`. Verifying that behaviour is part of any change to it.
 - One step at a time: implement, verify, stop, report, wait. This repo is the one place where that
   rule cannot be skipped, since it defines the rule.

@@ -6,8 +6,10 @@
 #   ./install.sh --project DIR       project files into DIR (the repository to set up)
 #   ./install.sh --all DIR           both
 #
-#   --yes     actually write (nothing is written without it)
-#   --force   overwrite project files that already exist
+#   --yes          actually write (nothing is written without it)
+#   --force        overwrite project files that already exist
+#   --no-backup    do not keep a copy of the files being replaced
+#   --keep N       keep at most N backups per file (default 0 = keep them all)
 #
 # Global layer = the universal contract, installed to both tools:
 #   ~/.claude/CLAUDE.md      Claude Code user-level memory
@@ -15,18 +17,46 @@
 #   ~/.claude/code-style.md  per-language style, referenced by the contract
 #
 # Project layer = the four templates copied into a repository, never overwritten unless --force.
+#
+# Any file about to be replaced is copied to <file>.bak-YYYYmmdd-HHMMSS first, so a wrong install
+# is one `cp` away from being undone. Identical files are left alone and never backed up, and the
+# exact rollback command is printed at the end. Nothing is ever deleted by default: pass --keep N
+# if you want old backups pruned.
 
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+TS="$(date +%Y%m%d-%H%M%S)"
 
 DO_GLOBAL=0
 DO_PROJECT=0
 PROJECT_DIR=""
 WRITE=0
 FORCE=0
+BACKUP=1
+KEEP=0
 
-usage() { sed -n '2,17p' "$0"; exit "${1:-0}"; }
+ROLLBACKS=()
+PRUNED=0
+
+usage() {
+  cat <<'USAGE'
+Install the agent working agreement: either layer, or both.
+
+  ./install.sh                     dry run, global layer
+  ./install.sh --global            global layer only  (this machine)
+  ./install.sh --project DIR       project files into DIR (the repository to set up)
+  ./install.sh --all DIR           both
+
+  --yes          actually write (nothing is written without it)
+  --force        overwrite project files that already exist
+  --no-backup    do not keep a copy of the files being replaced
+  --keep N       keep at most N backups per file (default 0 = keep them all)
+
+Any file about to be replaced is first copied to <file>.bak-YYYYmmdd-HHMMSS.
+USAGE
+}
+
 die() { echo "error: $*" >&2; exit 2; }
 
 while [[ $# -gt 0 ]]; do
@@ -36,7 +66,9 @@ while [[ $# -gt 0 ]]; do
     --all) DO_GLOBAL=1; DO_PROJECT=1; PROJECT_DIR="${2:-}"; [[ -n "$PROJECT_DIR" ]] || die "--all needs a directory"; shift 2 ;;
     --yes|-y) WRITE=1; shift ;;
     --force) FORCE=1; shift ;;
-    -h|--help) usage 0 ;;
+    --no-backup) BACKUP=0; shift ;;
+    --keep) KEEP="${2:-}"; [[ "$KEEP" =~ ^[0-9]+$ ]] || die "--keep needs a number"; shift 2 ;;
+    -h|--help) usage; exit 0 ;;
     *) die "unknown argument: $1" ;;
   esac
 done
@@ -68,6 +100,37 @@ if [[ $DO_PROJECT -eq 1 ]]; then
   done
 fi
 
+# Copy one file out of the way before it is replaced. Only ever called on an existing regular file.
+backup_of() {
+  local dest="$1" path="$dest.bak-$TS" old n
+  cp -p "$dest" "$path"
+  ROLLBACKS+=("$path|$dest")
+  if [[ "$KEEP" -gt 0 ]]; then
+    # Timestamps sort lexicographically, so a plain glob is oldest-first.
+    old=()
+    while IFS= read -r f; do
+      [[ -n "$f" ]] && old+=("$f")
+    done < <(ls -1 "$dest".bak-* 2>/dev/null || true)
+    n=${#old[@]}
+    while [[ $n -gt $KEEP ]]; do
+      rm -f "${old[0]}"
+      old=("${old[@]:1}")
+      n=$((n - 1))
+      PRUNED=$((PRUNED + 1))
+    done
+  fi
+}
+
+# replace <src> <dest>: back up first (only if something is actually there), then copy.
+replace() {
+  local src="$1" dest="$2"
+  if [[ $BACKUP -eq 1 && -f "$dest" ]]; then
+    backup_of "$dest"
+  fi
+  mkdir -p "$(dirname "$dest")"
+  cp "$src" "$dest"
+}
+
 [[ $WRITE -eq 0 ]] && ACTION="would write" || ACTION="writes"
 
 # --- global layer -----------------------------------------------------------------------------
@@ -78,21 +141,25 @@ if [[ $DO_GLOBAL -eq 1 ]]; then
     dest="${GLOBAL_TARGETS[$i]}"
     src="$GLOBAL_SRC_AGENTS"
     [[ "$dest" == *code-style.md ]] && src="$GLOBAL_SRC_STYLE"
-    if [[ -f "$dest" ]] && cmp -s "$src" "$dest"; then
-      state="already up to date"
-      [[ $WRITE -eq 1 ]] && state="up to date, untouched"
-    elif [[ -e "$dest" && ! -f "$dest" ]]; then
+
+    if [[ -e "$dest" && ! -f "$dest" ]]; then
       die "$dest exists and is not a regular file"
+    fi
+
+    if [[ -f "$dest" ]] && cmp -s "$src" "$dest"; then
+      state="already up to date, untouched"
     elif [[ -f "$dest" ]]; then
-      state="OVERWRITTEN (existing file replaced)"
+      if [[ $BACKUP -eq 1 ]]; then
+        state="REPLACED (backup: $(basename "$dest").bak-$TS)"
+      else
+        state="REPLACED, no backup (--no-backup)"
+      fi
+      if [[ $WRITE -eq 1 ]]; then replace "$src" "$dest"; fi
     else
       state="created"
+      if [[ $WRITE -eq 1 ]]; then replace "$src" "$dest"; fi
     fi
-    if [[ $WRITE -eq 1 ]]; then
-      mkdir -p "$(dirname "$dest")"
-      cp "$src" "$dest"
-    fi
-    printf '  %-38s %s\n' "$dest" "$state"
+    printf '  %-36s %s\n' "$dest" "$state"
   done
   echo
 fi
@@ -105,20 +172,24 @@ if [[ $DO_PROJECT -eq 1 ]]; then
   for f in "${PROJECT_FILES[@]}"; do
     src="$HERE/project/$f"
     dest="$PROJECT_DIR/$f"
+
     if [[ ! -e "$dest" ]]; then
       state="created"
+      if [[ $WRITE -eq 1 ]]; then replace "$src" "$dest"; fi
     elif cmp -s "$src" "$dest"; then
       state="already identical, untouched"
     elif [[ $FORCE -eq 1 ]]; then
-      state="OVERWRITTEN (--force)"
+      if [[ $BACKUP -eq 1 ]]; then
+        state="OVERWRITTEN (--force, backup: $(basename "$dest").bak-$TS)"
+      else
+        state="OVERWRITTEN (--force, no backup)"
+      fi
+      if [[ $WRITE -eq 1 ]]; then replace "$src" "$dest"; fi
     else
       state="EXISTS, skipped (use --force to replace)"
       skipped=$((skipped + 1))
     fi
-    if [[ $WRITE -eq 1 && ( ! -e "$dest" || $FORCE -eq 1 ) ]]; then
-      cp "$src" "$dest"
-    fi
-    printf '  %-38s %s\n' "$dest" "$state"
+    printf '  %-36s %s\n' "$dest" "$state"
   done
   echo
   if [[ $skipped -gt 0 ]]; then
@@ -130,8 +201,22 @@ if [[ $DO_PROJECT -eq 1 ]]; then
   echo
 fi
 
+# --- backups and rollback ---------------------------------------------------------------------
+
+if [[ ${#ROLLBACKS[@]} -gt 0 ]]; then
+  echo "Backups kept — undo by copying the left path over the right one:"
+  for entry in "${ROLLBACKS[@]}"; do
+    printf '  cp %s\n     %s\n' "${entry%%|*}" "${entry##*|}"
+  done
+  echo
+fi
+if [[ $PRUNED -gt 0 ]]; then
+  echo "  ($PRUNED older backup(s) removed by --keep $KEEP; they are gone.)"
+  echo
+fi
+
 if [[ $WRITE -eq 0 ]]; then
   echo "Dry run. Re-run with --yes to write."
 else
-  echo "Done."
+  echo "Done. Backups are never deleted unless you pass --keep N."
 fi

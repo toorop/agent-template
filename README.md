@@ -53,6 +53,15 @@ The same contract is written to **both** destinations, because both tools read t
 plus `global/code-style.md` to `~/.claude/code-style.md`. Re-run the script after every edit to
 `global/`. Never edit the installed copies by hand: they are overwritten, and the drift is silent.
 
+**Nothing is lost on the way.** Any file about to be replaced is first copied to
+`<file>.bak-YYYYmmdd-HHMMSS`, and the script prints the exact `cp` command that undoes the install:
+
+    cp ~/.claude/CLAUDE.md.bak-20260912-101511 ~/.claude/CLAUDE.md
+
+Identical files are left alone and never backed up, `--no-backup` turns the copies off, and backups
+are never deleted unless you ask for it with `--keep N` — a safety net that prunes itself is not a
+safety net.
+
 ## Project layer (once per repository)
 
     ./install.sh --project ~/dev/my-project          # dry run
@@ -60,7 +69,8 @@ plus `global/code-style.md` to `~/.claude/code-style.md`. Re-run the script afte
 
 Existing files are **never overwritten** unless you pass `--force`, so this is safe to re-run on a
 repository that already has an `AGENTS.md`. When a file is skipped, the script says so and shows you
-the `diff` command rather than guessing.
+the `diff` command rather than guessing. When you do force a replacement, the file being replaced is
+backed up first, exactly as in the global layer.
 
 Then fill in `PROJECT FACTS` in the repository's `AGENTS.md`. `project/CLAUDE.md` must contain
 `@AGENTS.md` and nothing else — some tools treat a leading `@` as an import and any extra line

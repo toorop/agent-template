@@ -158,6 +158,10 @@ This applies to `git checkout/restore/reset/clean`, `rm -rf`, and any CLI scaffo
 Why: an early scaffold ran a force-overwrite in a non-empty directory and deleted the original
 spec before any commit existed to protect it. An uncommitted file is a single point of failure.
 
+Corollary: before replacing or deleting a file that is **not** under version control, keep a
+timestamped copy (`<file>.bak-YYYYmmdd-HHMMSS`) and say where it is. Version control is the backup
+everywhere else.
+
 ## Secrets and dependencies
 
 - Never write a secret, token, or key into a tracked file, a commit, a log, or a chat message. Read
