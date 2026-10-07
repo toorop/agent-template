@@ -9,10 +9,6 @@ Explicitly **out of scope for now** (do not start early): —
 ## Step 0 — Bootstrap
 
 - [ ] Repo skeleton
-- [ ] `AGENTS.md` (from the agent template, PROJECT FACTS filled in)
-- [ ] `CLAUDE.md` (contains only `@AGENTS.md`)
-- [ ] `STATE.md`
-- [ ] `TODO.md` (this file)
 - [ ] Verification commands that actually run (`build`, `test`, `lint`)
 - [ ] `README.md`
 - [ ] License

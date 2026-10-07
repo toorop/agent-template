@@ -1,132 +1,76 @@
 # agent-template
 
-A reusable working agreement for AI coding agents, designed to survive a change of tool, of model,
-or of machine.
+A working agreement for AI coding agents, set up per repository by a skill: `/agt`.
 
-Two layers: one **universal contract** installed once per machine, and one thin **project file**
-copied into each repository. No duplication, one source to edit.
+It writes four files into the repository you are working in — `AGENTS.md` (the rules),
+`CLAUDE.md` (one line, `@AGENTS.md`), `STATE.md` (the hand-off) and `TODO.md` (the plan) — so any
+session, with any tool or model, can pick up where the last one stopped.
+
+It is opt-in per repository: nothing applies until you run `/agt` there, and the files it writes
+are copies you can edit when a repository needs to work differently.
+
+## Install
+
+The repository is the skill. Link it once:
+
+    ln -s ~/path/to/agent-template ~/.claude/skills/agt
+
+A `git pull` updates it. Other tools that read `SKILL.md` skills can link it into their own skills
+directory the same way.
+
+## Use
+
+In the repository to set up, type `/agt`. It works on a new repository and on one already in
+progress:
+
+1. It looks at the repository and infers what it can: name, verification commands, stack,
+   languages.
+2. It shows you those facts and asks for the rest — who commits and, on an existing project, the
+   next action. Nothing is written before you answer.
+3. It writes the files that are missing. On a project with history, `STATE.md` gets the recent
+   commits and `TODO.md` checks off what already exists.
+4. **It never overwrites an existing file.** It says which ones it left alone and offers to merge
+   where that helps — for example a `CLAUDE.md` that does not import `AGENTS.md`.
+
+Nothing is staged or committed.
+
+After that there is no command to learn. A new session reads `AGENTS.md`, which tells it to resume
+from `STATE.md`'s `## Next action`. To refresh the hand-off, say "update the state".
 
 ## Before you use it
 
-The rules shipped here are one person's habits, not a standard. Three of them are choices you
-should make deliberately rather than inherit:
+The rules are one person's habits, not a standard. Three are choices to make deliberately rather
+than inherit:
 
-1. **The language pair.** The contract says: answer the maintainer in **French**, write everything
-   inside the repository in **English**. That is one arbitrary pair. If your agent speaks a
-   different language to you, change it — but keep the split explicit, because "write docs in the
+1. **The repository language.** Everything written inside the repository is in **English**,
+   whatever language you chat in. Change it if you like, but keep it explicit: "write docs in the
    language you chat in" is how a repository ends up half-translated.
-2. **The working rhythm.** One step at a time: implement, verify, stop, report, wait for a go-ahead.
-   Never run A to Z unattended. That is stricter than most people start with. Loosening it is a
-   decision worth making on purpose.
+2. **The working rhythm.** One step at a time: implement, verify, stop, report, wait. Never run A
+   to Z unattended. Stricter than most people start with.
 3. **The git policy.** Never commit, stage or push without an explicit request, and one
-   authorization covers only the commits it names. Enforced with the agent, it is the single rule
-   that most reliably prevents surprise history.
+   authorization covers only the commits it names.
 
-The files mark these places with an `ADJUST` comment. Everything else is deliberately uncontroversial.
+Each personal choice carries an `ADJUST` comment in `templates/AGENTS.md`. Change them there for
+every future repository, or in a repository's own `AGENTS.md` for that one only.
 
 ## Layout
 
     agent-template/
-    ├── install.sh                 installs either layer, dry run by default
-    ├── global/
-    │   ├── AGENTS.md              THE contract — one source, installed to both tools
-    │   └── code-style.md          per-language style rules, referenced by AGENTS.md
-    └── project/                   copied into each new repository
-        ├── AGENTS.md              project facts + non-negotiables
-        ├── CLAUDE.md              contains only `@AGENTS.md`
-        ├── STATE.md               hand-off template, `## Next action` first
-        └── TODO.md                checkable plan template
-
-The two layers are independent: you can use the project files without ever installing the global
-contract, or install the contract and keep your own project files.
-
-## Global layer (once per machine)
-
-    ./install.sh                   # dry run, global layer
-    ./install.sh --global --yes    # install it
-
-The same contract is written to **both** destinations, because both tools read the same thing:
-
-    ~/.claude/CLAUDE.md            Claude Code, user-level memory
-    ~/.codex/AGENTS.md             Codex, user-level instructions
-
-plus `global/code-style.md` to `~/.claude/code-style.md`. Re-run the script after every edit to
-`global/`. Never edit the installed copies by hand: they are overwritten, and the drift is silent.
-
-**Nothing is lost on the way.** Any file about to be replaced is first copied to
-`<file>.bak-YYYYmmdd-HHMMSS`, and the script prints the exact `cp` command that undoes the install:
-
-    cp ~/.claude/CLAUDE.md.bak-20260912-101511 ~/.claude/CLAUDE.md
-
-Identical files are left alone and never backed up, `--no-backup` turns the copies off, and backups
-are never deleted unless you ask for it with `--keep N` — a safety net that prunes itself is not a
-safety net.
-
-## Project layer (once per repository)
-
-    ./install.sh --project ~/dev/my-project          # dry run
-    ./install.sh --project ~/dev/my-project --yes    # copy the templates in
-
-Existing files are **never overwritten** unless you pass `--force`, so this is safe to re-run on a
-repository that already has an `AGENTS.md`. When a file is skipped, the script says so and shows you
-the `diff` command rather than guessing. When you do force a replacement, the file being replaced is
-backed up first, exactly as in the global layer.
-
-Then fill in `PROJECT FACTS` in the repository's `AGENTS.md`. `project/CLAUDE.md` must contain
-`@AGENTS.md` and nothing else — some tools treat a leading `@` as an import and any extra line
-risks breaking it.
-
-Both layers at once:
-
-    ./install.sh --all ~/dev/my-project --yes
-
-## Make it yours
-
-Beyond the three choices above, the parts people most often change:
-
-- **Code style.** Vue, CSS, JavaScript and Python have detailed rules; the rest defers to the
-  ecosystem standard (`gofmt`, `rustfmt`, `clang-format`, the repo's own formatter). A formatter
-  configured in a repository always wins — the file says so explicitly, so an agent does not flip
-  between the two.
-- **Verification commands.** Per project, in `PROJECT FACTS`. If a project has none, the first step
-  should be creating them: an agent that cannot verify will guess.
-- **The attribution trailer.** The commit block shown is Claude Code specific. Delete it, or replace
-  it with whatever your tool injects.
-- **Dictated messages.** The contract asks the agent to read dictated messages charitably and to ask
-  whenever a real word might be a mis-transcription. That section is worth keeping even if you type:
-  the ambiguity it describes is exactly where agents guess wrongly. Drop it if you have no use for
-  it.
-
-Everything is plain Markdown. Nothing here depends on a plugin, a daemon, a gateway or a vendor.
-
-## Updating
-
-1. Edit in `global/` or `project/`.
-2. Re-run `./install.sh --global --yes` on each machine so the installed copies match.
-3. Commit and push.
-
-Repositories already set up keep their own copy of the project file: they are copies, not links, so
-later improvements have to be copied across deliberately.
-
-## Why two layers
-
-- **`global/`** holds what is true everywhere: language, tone, working rhythm, git caution, secrets,
-  code style, the state-file discipline. Written once, installed once, read by every session of
-  every project.
-- **`project/`** holds only what changes per repository: source of truth, verification commands,
-  stack, who commits. It defers to the global file for the rest.
-
-The project file deliberately repeats a short form of the contract, so it still works on a machine
-where the global file was never installed. That overlap is intentional: when one changes, check the
-other.
+    ├── SKILL.md              what /agt does
+    ├── templates/
+    │   ├── AGENTS.md         the rules, with Project facts to fill in
+    │   ├── STATE.md          hand-off, `## Next action` first
+    │   └── TODO.md           checkable plan
+    └── reference/
+        └── code-style.md     per-language rules; /agt copies only the project's languages
 
 ## What this deliberately does not do
 
-- No sandboxing, no permission model, no autonomy settings. Those belong to the harness.
-- No model routing, no multi-provider gateway, no automatic failover. Keep the model and the tool as
-  explicit choices.
-- No vendor lock-in: the rules are Markdown files any agent can read.
+- No global install: rules live in each repository, so each one can differ.
+- No sandboxing, permission model or autonomy settings. Those belong to the harness.
+- No model routing or provider failover. Keep the model and the tool as explicit choices.
+- No vendor lock-in: the output is plain Markdown any agent can read.
 
 ## License
 
-MIT — see `LICENSE`. Use it, fork it, strip it down.
+MIT — see `LICENSE`.

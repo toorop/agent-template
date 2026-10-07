@@ -1,30 +1,28 @@
 # agent-template — repo-level note
 
-This file is for an agent working **on this template**, not with it. If you are setting up a
-project, read `README.md` instead and use `install.sh`.
+This file is for an agent working **on this template**, not with it. To set up a project, read
+`README.md` and run `/agt` in that project.
 
 ## Layout
 
-- `global/AGENTS.md` — the universal contract. **Single source of truth.** Installed by
-  `install.sh --global` to `~/.claude/CLAUDE.md` and `~/.codex/AGENTS.md`, outside this repo.
-- `global/code-style.md` — per-language style detail, referenced by `global/AGENTS.md`.
-- `project/` — the four files copied into each repository by `install.sh --project DIR`.
-- `install.sh` — installs either layer. Dry run by default.
+- `SKILL.md` — the `agt` skill: what `/agt` does, step by step.
+- `templates/AGENTS.md` — the working agreement written into each repository. **Single source of
+  truth** for the rules.
+- `templates/STATE.md`, `templates/TODO.md` — the hand-off and plan templates.
+- `reference/code-style.md` — per-language rules; `/agt` copies only the sections a project needs.
 
 ## Rules for editing this repo
 
-- Change the contract in `global/AGENTS.md`, never in the installed copies. The copies are
-  overwritten by `install.sh`.
-- Anything that is the author's personal choice rather than a general truth gets an `ADJUST`
-  HTML comment right above it, so a reader can find what to change without reading everything.
-  Keep that convention: new personal rules get an `ADJUST` marker too.
-- `project/CLAUDE.md` must contain `@AGENTS.md` and nothing else.
-- The universal rules in `global/AGENTS.md` and the short form in `project/AGENTS.md` overlap on
-  purpose: the project file must stay usable on a machine where the global file is not installed.
-  When one changes, check the other.
-- `install.sh` must never overwrite a project file without `--force`, must require `--yes` to write
-  anything at all, and must back up every file it replaces as `<file>.bak-YYYYmmdd-HHMMSS` while
-  printing the `cp` command that undoes it. Backups must never be deleted unless the user passes
-  `--keep N`. Verifying that behaviour is part of any change to it.
+- Change the rules in `templates/AGENTS.md`. Repositories already set up keep their own copy:
+  improvements reach them only when copied across deliberately.
+- Anything that is the author's personal choice rather than a general truth gets an `ADJUST` HTML
+  comment right above it. New personal rules get one too.
+- `templates/AGENTS.md` is loaded by every session of every repository that uses it: keep it dense,
+  no examples where one sentence does.
+- `/agt` must never overwrite or edit an existing file in the target repository, must ask before
+  writing anything, and must never stage or commit. Verifying that behaviour — on a throwaway
+  repository, new and with history — is part of any change to `SKILL.md`.
+- The placeholders `SKILL.md` names (`PROJECT`, `NAME`, `PATH`, `COMMANDS`, `STACK`, `WHO`,
+  `CODE_STYLE_SECTIONS`) must stay in sync with the templates.
 - One step at a time: implement, verify, stop, report, wait. This repo is the one place where that
   rule cannot be skipped, since it defines the rule.
