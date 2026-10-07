@@ -171,6 +171,27 @@ everywhere else.
 - **KISS**: no fragile or superfluous dependency. Never add one without naming it in the stop
   report, with one line of justification.
 
+## Minimal code
+
+**Write only the code the task needs.** Before writing anything, stop at the first rung that holds:
+
+    does this need to exist?      -> no: say so and skip it
+    already in this codebase?     -> reuse it, do not rewrite it
+    standard library does it?     -> use it
+    native platform feature?      -> use it
+    installed dependency?         -> use it
+    one line?                     -> one line
+    otherwise                     -> the smallest thing that works, then stop
+
+- No abstraction, feature, flag or configuration nobody asked for. Three similar lines beat one
+  premature abstraction; no handling for a case that cannot occur (see `code-style.md`).
+- **Lazy is not careless.** Validation at a trust boundary, error handling for a case that really
+  happens, security and accessibility are never cut to save lines. What goes is the speculative
+  part, never the guard.
+- Run the ladder *after* understanding the problem, never instead of it: read the code the change
+  touches and trace the real flow first.
+- When the saving is significant, say in the stop report what you decided not to write.
+
 ## Code style
 
 Invariants that hold everywhere:

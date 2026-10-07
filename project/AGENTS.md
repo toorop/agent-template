@@ -33,6 +33,10 @@
   `## Next action`, under ~150 lines.
 - Keep the diff small enough to revert on its own: no drive-by refactors, no formatting sweeps, no
   dependency bumps inside a feature step.
+- **Write the minimum that works.** Reuse what already exists in the repo, reach for the standard
+  library or a native platform feature before writing custom code, and add no abstraction, option
+  or configuration nobody asked for. Never simplify away a trust-boundary check, real error
+  handling, security or accessibility.
 
 ## Context map (read only what the task needs)
 
